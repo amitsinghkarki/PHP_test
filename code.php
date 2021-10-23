@@ -1,31 +1,31 @@
 <?php
+
 /**
- * compare password / password2 field
  * Function To get bab or aba string with String as first argument and bool as a flag for converting bab to aba
  * @param type $value String . Single string value to perform search on.
  * @param type $bool Bool. Takes true for converting bab to aba
- * @return type $resultarry Array. Return all aba found in an Array
+ * @return type $resultarry Array. Return all aba found as an Array
  */
-//
+
 function getSubArray($value, $bool)
 {
     $resultarray = [];
+    //Convert string to array to perfrom check for bab and aba
     $arr = str_split($value, 1);
     for ($i = 1; $i < count($arr); $i++) {
         if ($arr[$i - 1] == $arr[$i + 1]) {
-            //If called for Inner Array
             if ($bool) {
-                //Converting String from bab to aba for easy matching
+                //Converting String from bab to aba for easy matching if bool is true
                 $string = $arr[$i] . $arr[$i - 1] . $arr[$i];
             } else {
-                //getting aba type string.
                 $string = $arr[$i - 1] . $arr[$i] . $arr[$i + 1];
             }
             //push string fetched to result array
             array_push($resultarray, $string);
         }
     }
-    return $resultarray; //Return the aba strings
+    //Return the aba strings array
+    return $resultarray;
 }
 
 /**
@@ -61,24 +61,16 @@ function validateString($arr)
     }
 }
 
-$start_time = microtime(true);
 //Input file stotred to variable $a
 $a = file('sample_input.txt');
 // initialized zero to validated_count
 $validated_count = 0;
 foreach ($a as $value) {
-    //function called to check each string in the file.
-    if ($check = validateString($value)) {
+    //function called to check each string in the file and increase the counter if it satisfies the condition.
+    if (validateString($value)) {
         $validated_count++;
     }
 }
 echo 'Total Validated Records :' . $validated_count;
-
-$end_time = microtime(true);
-
-// Calculate script execution time
-$execution_time = ($end_time - $start_time);
-
-echo " Execution time of script = " . $execution_time . " sec";
 
 //EOF
