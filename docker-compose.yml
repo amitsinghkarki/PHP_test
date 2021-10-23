@@ -1,0 +1,20 @@
+# For more information: https://laravel.com/docs/sail
+version: '3'
+services:
+    php:
+        image: php:7.2-apache
+        ports:
+            - 8080:8080
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+
+
+   
+    
+   
+networks:
+    sail:
+        driver: bridge
+
