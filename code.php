@@ -29,7 +29,6 @@ function getSubArray($value, $bool)
 }
 
 /**
-
  * Main function to validate String and return True or false based on condition
  * @param type $arr Array. Main Array consiting of inner and outer [] arrays
  * @return type Bool. ture and flase based on condition matching.
@@ -40,16 +39,16 @@ function validateString($arr)
     $inner_array = [];
     $outer_array = [];
     //Split the array on the Basis of [ and ] .
-    $results = preg_split("/[\[\]]/", $arr);
+    $split_array = preg_split("/[\[\]]/", $arr);
     //
-    for ($i = 0; $i < count($results); $i++) {
+    for ($i = 0; $i < count($split_array); $i++) {
         //If element at 1 3 5 7... send to inner else to outer array
         if ($i % 2 != 0) {
             //Merge all resulting bab converted to aba to Inner array
-            $inner_array = array_merge($inner_array, getSubArray($results[$i], true));
+            $inner_array = array_merge($inner_array, getSubArray($split_array[$i], true));
         } else {
             //Merge all resulting aba to Outer array
-            $outer_array = array_merge($outer_array, getSubArray($results[$i], false));
+            $outer_array = array_merge($outer_array, getSubArray($split_array[$i], false));
         }
     }
     //Match both arrays for common string if any results are found return true else false
@@ -63,14 +62,17 @@ function validateString($arr)
 
 //Input file stotred to variable $a
 $a = file('sample_input.txt');
+
 // initialized zero to validated_count
 $validated_count = 0;
+
 foreach ($a as $value) {
     //function called to check each string in the file and increase the counter if it satisfies the condition.
     if (validateString($value)) {
         $validated_count++;
     }
 }
+//Total Validated Records :231 as per the file included
 echo 'Total Validated Records :' . $validated_count;
 
 //EOF
