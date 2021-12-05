@@ -72,7 +72,7 @@ foreach ($a as $value) {
         $validated_count++;
     }
 }
-//Total Validated Records :231 as per the file included
-echo 'Total Validated Records :' . $validated_count;
+//Total StrangeIDs Validated :231 as per the file included
+echo 'Total StrangeIDs Validated :' . $validated_count;
 
 //EOF
