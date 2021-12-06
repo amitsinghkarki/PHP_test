@@ -1,5 +1,91 @@
 <?php
 require_once 'connection.php';
+
+if (isset($_POST['save'])) {
+    echo '<pre>';
+    print_r($_POST);
+    echo '</pre>';
+
+    $error_message = '';
+    $first_name = $_POST['first_name'];
+    $last_name = $_POST['last_name'];
+    $street = $_POST['street'];
+    $city = $_POST['city'];
+    $zip = $_POST['zip'];
+    $state = $_POST['state'];
+    $phone = $_POST['phone'];
+    $email = $_POST['email'];
+    $categories = $_POST['category'];
+    $rating_error = false;
+    for ($i = 0; $i < count($categories); $i++) {
+        if ($categories[$i] != 0) {
+            $rating[$i] = $_POST["rating_" . ($i + 1) . ""];
+            if ($rating[$i] == 0) {
+                $rating_error = true;
+            }
+        }
+    }
+
+    if ($first_name == '') {
+        $error_message = "Error: Please Enter the First Name";
+    } else if ($last_name == '') {
+        $error_message = "Error: Please Enter the Last Name";
+    } else if ($street == '') {
+        $error_message = "Error: Please Enter the street";
+    } else if ($city == '') {
+        $error_message = "Error: Please Enter the city";
+    } else if ($zip == '') {
+        $error_message = "Error: Please Enter the zip";
+    } else if ($state == '') {
+        $error_message = "Error: Please Enter the state";
+    } else if ($phone == "" && !ctype_digit($phone) && $phone < 10) {
+        $error_message = "Error: Please Enter the phone Numbers";
+    } else if ($email == '') {
+        $error_message = "Error: Please Enter the email";
+    } else if (array_sum($categories) == 0) {
+        $error_message = "Error: Please Select at Least 1 Category";
+    } else if ($rating_error) {
+        $error_message = 'Error: Please Select rating for selected Categories';
+    } else {
+        echo array_sum($categories);
+        $prepared = $conn->prepare("INSERT INTO `user_data` ( `first_name` , `last_name` ,`street` , `city` ,`zip` , `state` ,`phone` , `email`  ) VALUES ( ? , ? , ? , ? , ? , ? ,? , ?  ) ; ");
+
+        $result = $prepared->bind_param("ssssssss", $first_name, $last_name, $street, $city, $zip, $state, $phone, $email);
+
+        $result = $prepared->execute();
+        if ($result == false) {
+            die("An Error occurred While Saving data");
+        }
+        $user_id = mysqli_insert_id($conn);
+
+        $prepared->close();
+
+        //Insert Skills for users
+        for ($i = 0; $i < count($categories); $i++) {
+            if ($categories[$i] != 0) {
+                $category = $categories[$i];
+                $user_skill = $conn->prepare("INSERT INTO `user_skills` ( `user_id` , `skill_id` ,`rating` ) VALUES ( ? , ? , ?) ; ");
+
+                $result = $user_skill->bind_param("sss", $user_id, $category, $_POST["rating_" . ($i + 1) . ""]);
+                // echo '<pre>';
+                // print_r($category);
+                // echo '</pre>';
+                // die();
+                $result = $user_skill->execute();
+                if ($result == false) {
+                    die("An Error occurred While Saving data");
+                }
+
+                $user_skill->close();
+
+            }
+        }
+
+    }
+
+    echo 'THIS REACHED' . $error_message;
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -17,7 +103,7 @@ require_once 'connection.php';
 <div class="flex justify-center items-center h-screen w-full bg-blue-400">
     <div class="w-1/2 bg-white rounded shadow-2xl p-8 m-8">
         <h1 class="block w-full text-center text-gray-800 text-2xl font-bold mb-6">User Section</h1>
-        <form name='userform' id='userform' action="submitform.php" onsubmit="return validateForm()"  method="post">
+        <form name='userForm' id='userForm' action="<?=$_SERVER['PHP_SELF']?>" onsubmit="return validateForm()"  method="post">
 
 
         <div class="flex flex-col md:flex-row">
@@ -67,11 +153,12 @@ require_once 'connection.php';
                         <input placeholder="E-mail id" required class="p-1 px-2  outline-none w-full  text-gray-800 focus:ring focus:border-blue-700" type="text" name="email" id="email" required pattern="[^@]+@[^@]+\.[a-zA-Z]{2,6}"> </div>
                 </div>
             </div>
+            <h1 class="block w-full text-center text-gray-800 text-2xl font-bold m-6">User Skills</h1>
 
 
             <?php
-$categoryies = getCategories($conn);
-while ($category = mysqli_fetch_array($categoryies)) {
+$categories = getCategories($conn);
+while ($category = mysqli_fetch_array($categories)) {
 
     ?>
                     <div class="flex flex-col md:flex-row">
@@ -98,7 +185,7 @@ $skills = getSkills($conn, $category["id"]);
                     </div>
                     <div class="w-full mx-2 flex-1">
                         <div class="font-bold font-bold text-lg text-gray-900 leading-8 uppercase"> Rating</div>
-                        <div class="bg-white my-2 p-1 outline-noneflex border border-gray-200 rounded">
+                        <div class="bg-white my-2 p-1 outline-none flex border border-gray-200 rounded">
 
                         <select class="p-1 px-2  w-full outline-none w-full text-gray-800 focus:ring focus:border-blue-700" name="rating_<?=$category["id"]?>" id="rating_<?=$category["id"]?>">
                         <option   value="0" default>Please choose rating</option>
@@ -125,7 +212,7 @@ $skills = getSkills($conn, $category["id"]);
 
 
 
-            <button class="block bg-blue-400 hover:bg-blue-600 text-white uppercase text-lg mx-auto p-4 rounded" type="submit">Submit Response</button>
+            <button class="block bg-blue-400 hover:bg-blue-600 text-white uppercase text-lg mx-auto p-4 rounded m-6" type="submit" name="save" id="save" value="Save">Submit Response</button>
 
 
 
@@ -151,35 +238,27 @@ $skills = getSkills($conn, $category["id"]);
       if(!(e.key).match(letters)) e.preventDefault();
     });
 
-    $('#onlyalpha').keypress(function(e) {
-      var letters=/^[a-z]/gi; //i means ignorecase
-      if(!(e.key).match(letters)) e.preventDefault();
-    });
 
-    $('#speclchar').keypress(function(e) {
-      var letters=/^[0-9a-z]/gi;
-      if((e.key).match(letters)) e.preventDefault();
-    });
 
 function validateForm() {
-  let zip = document.forms["userform"]["zip"].value;
+  let zip = document.forms["userForm"]["zip"].value;
   if (zip.length <6) {
     alert("Zip code need to be 6 digits");
     return false;
   }
 
-  let phone = document.forms["userform"]["phone"].value;
+  let phone = document.forms["userForm"]["phone"].value;
   if (phone.length <10) {
     alert("Phone number need to be at least 10 digits");
     return false;
   }
 
-
+  let category_flag=false;
   let categories = document.getElementsByName('category[]');
   for (var i = 0; i <categories.length; i++) {
     var category=categories[i];
     if(category.value!=0)
-    {
+    {   category_flag=true;
         let category_rating = document.getElementById("rating_"+category.id);
         if(category_rating.value==0)
         {
@@ -189,6 +268,11 @@ function validateForm() {
         return false;
         }
     }
+}
+if(category_flag==false)
+{
+    alert("Need to select at least one skill");
+    return false;
 }
 return true;
 }

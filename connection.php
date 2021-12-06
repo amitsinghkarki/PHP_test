@@ -1,13 +1,14 @@
 <?php
 
-$servername = "mysql";
+//$serverName = "mysql";
+$serverName = "localhost";
 
 $username = "amit";
 $password = "amit";
 $dbname = "dummy";
 $port = '3306';
 
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
+$conn = new mysqli($serverName, $username, $password, $dbname, $port);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -23,7 +24,31 @@ function getCategories($db)
 
 function getSkills($db, $category)
 {
-    $skill_sql = "SELECT * FROM skill where category_id=$category";
+    $skill_sql = $db->prepare("SELECT * FROM skill where category_id=?");
+    $result = $skill_sql->bind_param("i", $category);
+    $result = $skill_sql->execute();
+    $result = $skill_sql->get_result();
+    $skill_sql->close();
+    return $result;
 
-    return $result = $db->query($skill_sql);
+}
+
+function getUsersData($db)
+{
+    $users_sql = "SELECT user_id,first_name,last_name FROM user_data ";
+    return $result = $db->query($users_sql);
+}
+
+function getUserById($db, $id)
+{
+    $user_sql = $db->prepare("SELECT * FROM user_data where user_id=?");
+
+    $result = $user_sql->bind_param("i", $id);
+
+    $result = $user_sql->execute();
+    $result = $user_sql->get_result();
+
+    $user_sql->close();
+    return $result;
+
 }
