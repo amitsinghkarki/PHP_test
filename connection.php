@@ -1,7 +1,7 @@
 <?php
-
-//$serverName = "mysql";
-$serverName = "localhost";
+session_start();
+$serverName = "mysql";
+// $serverName = "localhost";
 
 $username = "amit";
 $password = "amit";
@@ -35,7 +35,7 @@ function getSkills($db, $category)
 
 function getUsersData($db)
 {
-    $users_sql = "SELECT user_id,first_name,last_name FROM user_data ";
+    $users_sql = "SELECT user_id,first_name,last_name,phone,email FROM user_data ";
     return $result = $db->query($users_sql);
 }
 
@@ -50,5 +50,61 @@ function getUserById($db, $id)
 
     $user_sql->close();
     return $result;
+
+}
+
+function getUserByEmail($db, $email)
+{
+    $user_sql = $db->prepare("SELECT * FROM user_data where email=?");
+
+    $result = $user_sql->bind_param("s", $email);
+
+    $result = $user_sql->execute();
+    $result = $user_sql->get_result();
+
+    $user_sql->close();
+    return $result;
+
+}
+
+function getSkillsOfUser($db, $id)
+{
+    $user_skill_sql = $db->prepare("SELECT u.id, user_id,c.category_name , s.skill_name ,u.skill_id, rating
+    FROM user_skills u
+    inner join skill s on s.skill_id =u.skill_id
+    inner join category c on c.id =s.category_id
+    where user_id=?");
+
+    $result = $user_skill_sql->bind_param("i", $id);
+
+    $result = $user_skill_sql->execute();
+    $result = $user_skill_sql->get_result();
+
+    $user_skill_sql->close();
+    return $result;
+
+}
+
+function loginAdmin($db, $user, $pass)
+{
+    $pass = hash('sha256', $pass);
+
+    $admin_login = $db->prepare("SELECT *
+    FROM admin
+    where username=? and password=?");
+
+    $result = $admin_login->bind_param("ss", $user, $pass);
+
+    $result = $admin_login->execute();
+    $result = $admin_login->get_result();
+    $login = mysqli_num_rows($result);
+    $admin_login->close();
+
+    if ($login > 0) {
+
+        return true;
+    }
+
+    return false;
 
 }

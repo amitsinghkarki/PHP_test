@@ -38,8 +38,14 @@ CREATE TABLE `user_skills` (
 `user_id` int NOT NULL,
 `skill_id` int NOT NULL,
 `rating` tinyint NOT NULL,
-
 PRIMARY KEY (`id`),
 CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `user_data` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+
+CREATE TABLE `admin` (
+`id` int NOT null AUTO_INCREMENT,
+`username` varchar(50) NOT NULL,
+`password` varchar(64) NOT NULL,
+PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

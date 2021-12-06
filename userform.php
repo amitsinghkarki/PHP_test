@@ -1,12 +1,10 @@
 <?php
+ob_start();
+
 require_once 'connection.php';
 
 if (isset($_POST['save'])) {
-    echo '<pre>';
-    print_r($_POST);
-    echo '</pre>';
 
-    $error_message = '';
     $first_name = $_POST['first_name'];
     $last_name = $_POST['last_name'];
     $street = $_POST['street'];
@@ -25,8 +23,11 @@ if (isset($_POST['save'])) {
             }
         }
     }
-
-    if ($first_name == '') {
+    $existing_email=getUserByEmail($conn,$email);
+    $email_count=mysqli_num_rows($existing_email);
+    if ($email_count>0) {
+        $error_message = "Error: Email Already Exist.";
+    }else if ($first_name == '') {
         $error_message = "Error: Please Enter the First Name";
     } else if ($last_name == '') {
         $error_message = "Error: Please Enter the Last Name";
@@ -47,7 +48,6 @@ if (isset($_POST['save'])) {
     } else if ($rating_error) {
         $error_message = 'Error: Please Select rating for selected Categories';
     } else {
-        echo array_sum($categories);
         $prepared = $conn->prepare("INSERT INTO `user_data` ( `first_name` , `last_name` ,`street` , `city` ,`zip` , `state` ,`phone` , `email`  ) VALUES ( ? , ? , ? , ? , ? , ? ,? , ?  ) ; ");
 
         $result = $prepared->bind_param("ssssssss", $first_name, $last_name, $street, $city, $zip, $state, $phone, $email);
@@ -81,9 +81,33 @@ if (isset($_POST['save'])) {
             }
         }
 
+
+        require_once "Mail.php";
+           $keyid=encode5t($cand_rollno);
+           $from = "Dummy <dummy@test.in>";
+           $to =$email;
+           $subject = "Form Submit Confirmation";
+           $body .= "Dear ".$firstname.",\n\n";
+           $body .= "Your Form submission has been received \n\n";
+       
+    
+            $username = "dummy";
+            $password = "dummypass";
+ 
+                $host = "dummyrealy.test.in";   
+                $port=25;
+                $headers = array ('From' => $from,'To' => $to,'Subject' => $subject);
+             
+                $smtp = Mail::factory('smtp',array ('host' => $host,'port' => $port,'auth' => false));
+                $mail = $smtp->send($to, $headers, $body);
+            if (PEAR::isError($mail)){
+              echo("<p>" . $mail->getMessage() . "</p>");
+            }
+            else{
+           $sucess_message='Data Saved Sucessfully. A confirmation mail has been sent to email address <font color=#0000999>'.$email.'</font>. ';
+            }
     }
 
-    echo 'THIS REACHED' . $error_message;
 }
 
 ?>
@@ -100,6 +124,29 @@ if (isset($_POST['save'])) {
     <title>User</title>
 </head>
 <body class="bg-purple-200">
+
+<?php if(isset($error_message))
+{
+    ?>
+    <div role="alert">
+  <div class="bg-red-500 text-white font-bold rounded-t px-4 py-2">
+  <p><?=$error_message?></p>
+  </div>
+ 
+</div>
+<?}?>
+
+<?php if(isset($sucess_message))
+{
+    ?>
+    <div role="alert">
+  <div class="bg-green-500 text-white font-bold rounded-t px-4 py-2">
+    Success :   <p><?=$sucess_message?></p>
+
+  </div>
+
+</div>
+<?}?>
 <div class="flex justify-center items-center h-screen w-full bg-blue-400">
     <div class="w-1/2 bg-white rounded shadow-2xl p-8 m-8">
         <h1 class="block w-full text-center text-gray-800 text-2xl font-bold mb-6">User Section</h1>
@@ -263,7 +310,6 @@ function validateForm() {
         if(category_rating.value==0)
         {
         alert("Rating need to be filled for selected skill");
-        category_rating.classList.add("border-red-700");
         category_rating.focus();
         return false;
         }
